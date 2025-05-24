@@ -2,7 +2,7 @@
 # ICSH
 
 
-## Milestone 1: Interactive command-line interpreter
+# Milestone 1: Interactive command-line interpreter
 
 - Shows a prompt (icsh $)
 - Reads user commands : !!(repeat previous command), echo and exit
@@ -16,14 +16,15 @@ Firstly, I declare `int exit_code = -1;`to control when to exit the shell and -1
     
 I seperated into icsh.c icsh_builtins.c
 icsh.c ➜ the main shell loop, input reading, and command processing.
+
 icsh_builtins.c ➜ logic for built-in commands; exit, echo, and !!.
 
-# 1. handle_repeat_command(char *buffer, const char *prev_command)
+## 1. handle_repeat_command(char *buffer, const char *prev_command)
    
 If !! is entered and there is no previous command stored, it clears the input buffer so nothing runs, and give a new prompt.
 If there is a previous command, it replaces the current input buffer with that previous command to execute it again.
 
-# 2. handle_builtin(char **args, int *exit_code)
+## 2. handle_builtin(char **args, int *exit_code)
    
 This function checks if the parsed command matches any built-in commands and handles them internally without creating a new process.
 
