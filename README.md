@@ -29,8 +29,9 @@ If there is a previous command, it replaces the current input buffer with that p
 This function checks if the parsed command matches any built-in commands and handles them internally without creating a new process.
 
 Milestone 1 Built-ins include:
-echo: Prints all the arguments given after the echo command
-exit: Exits the shell (>= 0 = "Exit the shell with this code")
+
+- echo: Prints all the arguments given after the echo command
+- exit: Exits the shell (>= 0 = "Exit the shell with this code")
 
 When a built-in command is executed, the function returns true indicating the command was handled; otherwise, it returns false to indicate it’s not a built-in and show "bad command".
 
