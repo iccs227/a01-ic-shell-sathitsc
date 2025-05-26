@@ -3,7 +3,6 @@
  * StudentID: 6481366
  */
 
-
 /**
 source :
 M1 :
@@ -13,6 +12,8 @@ https://www.shecodes.io/athena/68870-how-to-write-a-unix-command-line-interprete
 M2 :
 https://www.cs.purdue.edu/homes/grr/SystemsProgrammingBook/Book/Chapter5-WritingYourOwnShell.pdf
 https://shapeshed.com/unix-exit-codes/
+M3 :
+
  */
 
 #include <stdio.h>
@@ -21,6 +22,7 @@ https://shapeshed.com/unix-exit-codes/
 #include <unistd.h>
 #include <stdbool.h>
 #include "icsh_builtins.h"
+#include "icsh_external_command.h"
 
 #define MAX_CMD_BUFFER 255
 #define MAX_ARGS 64
@@ -54,8 +56,20 @@ int main(int argc, char *argv[]) { // main is changed to handle both interactive
                "./づ~ :¨·.·¨:     ₊˚  \n"
                "           `·..·‘    ₊˚   ♡\n");
     }
+    /**
+     * In Milestone 1 and 2, the main shell loop was :
+     *      while (exit_code == -1)
+     * ──── ୨୧ ────
+     * This worked on m1,2 because `exit_code` remained -1 unless explicitly set by a command.
+     * Once any command sets `exit_code` to something other than -1 (like 0 for success) check icsh_external_command.c,
+     * the condition `exit_code == -1` becomes false and it stops running.
+     * As a result, the shell loop exits—even if I did not type `exit`.
+     * I replaced the loop with `while (1)`, which creates an infinite loop.
+     * This ensures that the shell keeps running and *only* exits when the user explicitly types `exit`.
+     * ──── ୨୧ ────
 
-    while (exit_code == -1) {
+*/
+    while (1) { // Keep the shell running forever — until I manually break the loop.
         if (input == stdin) {
             printf("icsh $ ");
             fflush(stdout);
@@ -99,18 +113,31 @@ int main(int argc, char *argv[]) { // main is changed to handle both interactive
         // 3) https://unix.stackexchange.com/questions/501128/what-does-echo-do
         // 4) If there is no previous command to set exit code , just set it = 0
         if (args[0] && strcmp(args[0], "echo") == 0 && args[1] && strcmp(args[1], "$?") == 0) {
-            printf("%d\n", exit_code == -1 ? 0 : exit_code); //(exit_code == -1 means no previous exit code staus stored
-        }
-
-        if (handle_builtin(args, &exit_code)) { // From Milestone 1
+            printf("%d\n", exit_code == -1 ? 0 : exit_code); //(exit_code == -1 means no previous exit code status stored
             continue;
         }
 
-        printf("bad command\n");
+        // Check for built-in commands
+        if (handle_builtin(args, &exit_code)) {
+            // if user types 'exit', stop the shell
+            if (args[0] != NULL && strcmp(args[0], "exit") == 0) {
+                break;
+            }
+            continue;
+        }
+
+        // run external command
+        if (args[0] != NULL) {
+            int ret = run_external_command(args, &exit_code);
+            if (ret != 0) {
+                printf("icsh: error running command\n");
+            }
+        } else {
+            printf("bad command\n");
+        }
     }
 
     // If input == stdin, no need to close it unless it reads from a file (script mode activated)
-
     if (input != stdin) {
         fclose(input);
     }
