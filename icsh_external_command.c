@@ -38,7 +38,7 @@ int run_external_command(char *args[], int *exit_code) {
     if (pid == 0) { // Replaces the child process with the external command using execvp()
         execvp(args[0], args);
         // https://www.digitalocean.com/community/tutorials/execvp-function-c-plus-plus
-        perror("icsh");
+        fprintf(stderr, ".·°՞(っ-ᯅ-ς)՞°·.: bad command\n");
         exit(127); // if execvp fails
         //  "command not found" exit code // https://linuxconfig.org/how-to-fix-bash-127-error-return-code
     }
