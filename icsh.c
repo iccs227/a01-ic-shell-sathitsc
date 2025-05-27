@@ -13,7 +13,12 @@ M2 :
 https://www.cs.purdue.edu/homes/grr/SystemsProgrammingBook/Book/Chapter5-WritingYourOwnShell.pdf
 https://shapeshed.com/unix-exit-codes/
 M3 :
-
+M4 :
+https://stackoverflow.com/questions/2485028/signal-handling-in-c
+https://stackoverflow.com/questions/22865730/wexitstatuschildstatus-returns-0-but-waitpid-returns-1
+https://www.ibm.com/docs/en/zos/3.1.0?topic=functions-wait-wait-child-process-end
+https://people.cs.rutgers.edu/~pxk/416/notes/c-tutorials/wait.html
+https://www.ibm.com/docs/en/zos/2.4.0?topic=functions-sigemptyset-initialize-signal-mask-exclude-all-signals
  */
 
 #include <stdio.h>
@@ -23,6 +28,7 @@ M3 :
 #include <stdbool.h>
 #include "icsh_builtins.h"
 #include "icsh_external_command.h"
+#include "icsh_signal_handler.h"
 
 #define MAX_CMD_BUFFER 255
 #define MAX_ARGS 64
@@ -32,6 +38,7 @@ int main(int argc, char *argv[]) { // main is changed to handle both interactive
     char prev_command[MAX_CMD_BUFFER] = "";
     char *args[MAX_ARGS];
     int exit_code = -1;
+    implement_signal_handlers(); //Milestone 4
 
     // in Milestone 2, I add argc into main to count command-line arguments.
     // set default: interactive mode input, user can type anything ≽^• ˕ • ྀི≼
