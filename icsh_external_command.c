@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/wait.h>
+extern pid_t fg_pid;
 
 /**
  * 1) This function handles execution of external commands.
@@ -20,7 +21,7 @@
  *    - In earlier versions (Milestone 1 & 2), the shell's main loop used:
  *          while (exit_code == -1)
  *    - But when an external command runs, `exit_code` is updated. --> loop ends (I don't want that)
- * For valid command exit_code = 0, else = other error numbers
+ * For valid command exit_code = 0, else = other error numbers (1)
  * Anything other than -1 (like 0, 1, or 127), loop stops .·°՞(っ-ᯅ-ς)՞°·.
  *
  * 4) Fix (in `icsh.c`):
@@ -35,22 +36,32 @@ int run_external_command(char *args[], int *exit_code) {
         *exit_code = 1; //error
         return -1;
     }
-    if (pid == 0) { // Replaces the child process with the external command using execvp()
+    if (pid == 0) { // Child process
+        setpgid(0, 0); // Create new process group
         execvp(args[0], args);
-        // https://www.digitalocean.com/community/tutorials/execvp-function-c-plus-plus
         fprintf(stderr, ".·°՞(っ-ᯅ-ς)՞°·.: bad command\n");
         exit(127); // if execvp fails
         //  "command not found" exit code // https://linuxconfig.org/how-to-fix-bash-127-error-return-code
     }
     // Parent process
     int status;
-    if (waitpid(pid, &status, 0) == -1) {
+    fg_pid = pid; // set foreground process group leader
+    if (waitpid(pid, &status, WUNTRACED) == -1) {
         perror("waitpid failed");
-        *exit_code = 1; //// waitpid failed
+        fg_pid = -1;
+        *exit_code = 1;
         return -1;
     }
-    if (WIFEXITED(status)) {
+
+    fg_pid = -1; // Clear foreground process
+//https://stackoverflow.com/questions/22865730/wexitstatuschildstatus-returns-0-but-waitpid-returns-1
+    if (WIFSTOPPED(status)) {
+        *exit_code = 0;
+        printf("\n・┆✦Process Stopped ʚ♡ɞ✦ ┆・ %s\n", args[0]);
+    } else if (WIFEXITED(status)) {
         *exit_code = WEXITSTATUS(status);
+    } else if (WIFSIGNALED(status)) {
+        *exit_code = WTERMSIG(status);
     } else {
         *exit_code = 1;
     }
