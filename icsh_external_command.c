@@ -7,6 +7,9 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <fcntl.h>
+#include <string.h>
+
 extern pid_t fg_pid;
 
 /**
@@ -27,9 +30,40 @@ extern pid_t fg_pid;
  * 4) Fix (in `icsh.c`):
  *    - Changed the loop to: `while (1)`
  *    - This allows the shell to keep running until explicitly types `exit`.
+ *
+ * 5) Milestone 5: I/O Redirection =====Not done yet=====
+ *    - Based from I/O Redirection Resources on A1
  */
 
 int run_external_command(char *args[], int *exit_code) {
+    int input_file_descriptor = -1, output_file_descriptor = -1;
+    char *exec_argument[100]; //only filtered arguments (NO < > )
+    int j = 0;
+
+    // I/O Redirection M5
+    for (int i = 0; args[i] != NULL; i++) {
+        if (strcmp(args[i], "<") == 0 && args[i + 1] != NULL) {
+            input_file_descriptor = open(args[i + 1], O_RDONLY); // Open input file
+            if (input_file_descriptor < 0) {
+                perror("Error: Invalid input ( ꩜ ᯅ ꩜;) Cannot read file");
+                *exit_code = 1;
+                return -1;
+            }
+            i++;
+        } else if (strcmp(args[i], ">") == 0 && args[i + 1] != NULL) {
+            output_file_descriptor = open(args[i + 1], O_WRONLY | O_CREAT | O_TRUNC, 0644);
+            if (output_file_descriptor < 0) {
+                perror("Output file error");
+                *exit_code = 1;
+                return -1;
+            }
+            i++;
+        } else {
+            exec_argument[j++] = args[i];
+        }
+    }
+    exec_argument[j] = NULL;
+
     pid_t pid = fork();
     if (pid < 0) {
         perror("fork failed");
@@ -38,7 +72,18 @@ int run_external_command(char *args[], int *exit_code) {
     }
     if (pid == 0) { // Child process
         setpgid(0, 0); // Create new process group
-        execvp(args[0], args);
+
+        if (input_file_descriptor != -1) {
+            dup2(input_file_descriptor, STDIN_FILENO);
+            close(input_file_descriptor);
+        }
+        if (output_file_descriptor != -1) {
+            dup2(output_file_descriptor, STDOUT_FILENO); //Out will go in the file
+            close(output_file_descriptor);
+        }
+
+        execvp(exec_argument[0], exec_argument);
+
         fprintf(stderr, ".·°՞(っ-ᯅ-ς)՞°·.: bad command\n");
         exit(127); // if execvp fails
         //  "command not found" exit code // https://linuxconfig.org/how-to-fix-bash-127-error-return-code
