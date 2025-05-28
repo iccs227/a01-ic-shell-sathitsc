@@ -43,6 +43,8 @@ void close_file_descriptor(int input_fd, int output_fd) { //make sure to safely 
 int handle_redirection(char *args[], char *exec_argument[],
                        int *input_file_descriptor, int *output_file_descriptor, int *exit_code) {
     int j = 0;
+    *input_file_descriptor = -1; // Stores file descriptor
+    *output_file_descriptor = -1; // Stores file descriptor
 
     // I/O Redirection M5
     for (int i = 0; args[i] != NULL; i++) {
