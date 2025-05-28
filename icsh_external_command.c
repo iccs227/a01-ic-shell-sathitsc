@@ -11,6 +11,7 @@
 #include <string.h>
 
 extern pid_t fg_pid;
+#define MAX_ARGS 100
 
 /**
  * 1) This function handles execution of external commands.
@@ -31,8 +32,12 @@ extern pid_t fg_pid;
  *    - Changed the loop to: `while (1)`
  *    - This allows the shell to keep running until explicitly types `exit`.
  *
- * 5) Milestone 5: I/O Redirection =====Not done yet=====
+ * 5) Milestone 5: I/O Redirection
  *    - Based from I/O Redirection Resources on A1
+ *    - Handle appending
+ *    - add function to handle closing the open file descriptors for input/output redirection, if valid.
+ *    - add handle_redirection
+ *
  */
 
 void close_file_descriptor(int input_fd, int output_fd) { //make sure to safely close the input and output files if they are open.
@@ -46,7 +51,6 @@ int handle_redirection(char *args[], char *exec_argument[],
     *input_file_descriptor = -1; // Stores file descriptor
     *output_file_descriptor = -1; // Stores file descriptor
 
-    // I/O Redirection M5
     for (int i = 0; args[i] != NULL; i++) {
         if (strcmp(args[i], "<") == 0) {
             if (args[i + 1] != NULL &&
@@ -96,11 +100,26 @@ int handle_redirection(char *args[], char *exec_argument[],
         }
     }
     exec_argument[j] = NULL;
+    return 0;
+}
 
+
+int run_external_command(char *args[], int *exit_code) {
+    int input_file_descriptor = -1, output_file_descriptor = -1;
+    char *exec_argument[100] = {0};
+
+    //Parse and open redirection files
+    if (handle_redirection(args, exec_argument, &input_file_descriptor, &output_file_descriptor, exit_code) != 0) {
+        close_file_descriptor(input_file_descriptor, output_file_descriptor);
+        return -1;
+    }
+
+    //Fork a new process
     pid_t pid = fork();
     if (pid < 0) {
         perror("fork failed");
-        *exit_code = 1; //error
+        *exit_code = 1;
+        close_file_descriptor(input_file_descriptor, output_file_descriptor);
         return -1;
     }
     if (pid == 0) { // Child process
@@ -108,34 +127,37 @@ int handle_redirection(char *args[], char *exec_argument[],
 
         if (input_file_descriptor != -1) {
             dup2(input_file_descriptor, STDIN_FILENO);
-            close(input_file_descriptor);
         }
         if (output_file_descriptor != -1) {
-            dup2(output_file_descriptor, STDOUT_FILENO); //Out will go in the file
-            close(output_file_descriptor);
+            dup2(output_file_descriptor, STDOUT_FILENO); //Output will go in the file
         }
+        close_file_descriptor(input_file_descriptor, output_file_descriptor);
 
         execvp(exec_argument[0], exec_argument);
-
         fprintf(stderr, ".·°՞(っ-ᯅ-ς)՞°·.: bad command\n");
         exit(127); // if execvp fails
-        //  "command not found" exit code // https://linuxconfig.org/how-to-fix-bash-127-error-return-code
+        //  "command not found" exit code
+        // https://linuxconfig.org/how-to-fix-bash-127-error-return-code
     }
     // Parent process
+    fg_pid = pid;
     int status;
-    fg_pid = pid; // set foreground process group leader
     if (waitpid(pid, &status, WUNTRACED) == -1) {
-        perror("waitpid failed");
+        perror("icsh: waitpid failed");
         fg_pid = -1;
         *exit_code = 1;
+        close_file_descriptor(input_file_descriptor, output_file_descriptor);
         return -1;
     }
 
-    fg_pid = -1; // Clear foreground process
-//https://stackoverflow.com/questions/22865730/wexitstatuschildstatus-returns-0-but-waitpid-returns-1
+    fg_pid = -1;
+    // Clear foreground process
+    //https://stackoverflow.com/questions/22865730/wexitstatuschildstatus-returns-0-but-waitpid-returns-1
+    close_file_descriptor(input_file_descriptor, output_file_descriptor);
+
     if (WIFSTOPPED(status)) {
         *exit_code = 0;
-        printf("\n・┆✦Process Stopped ʚ♡ɞ✦ ┆・ %s\n", args[0]);
+        printf("\n・┆✦ Process Stopped ʚ♡ɞ ✦ ┆・ %s\n", exec_argument[0]);
     } else if (WIFEXITED(status)) {
         *exit_code = WEXITSTATUS(status);
     } else if (WIFSIGNALED(status)) {

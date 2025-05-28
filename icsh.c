@@ -1,5 +1,5 @@
 /* ICCS227: Project 1: icsh
-* Name: Chinanard Sathitseth
+ * Name: Chinanard Sathitseth
  * StudentID: 6481366
  */
 
@@ -12,21 +12,20 @@ https://www.shecodes.io/athena/68870-how-to-write-a-unix-command-line-interprete
 M2 :
 https://www.cs.purdue.edu/homes/grr/SystemsProgrammingBook/Book/Chapter5-WritingYourOwnShell.pdf
 https://shapeshed.com/unix-exit-codes/
-M3 :
 M4 :
 https://stackoverflow.com/questions/2485028/signal-handling-in-c
 https://stackoverflow.com/questions/22865730/wexitstatuschildstatus-returns-0-but-waitpid-returns-1
 https://www.ibm.com/docs/en/zos/3.1.0?topic=functions-wait-wait-child-process-end
 https://people.cs.rutgers.edu/~pxk/416/notes/c-tutorials/wait.html
 https://www.ibm.com/docs/en/zos/2.4.0?topic=functions-sigemptyset-initialize-signal-mask-exclude-all-signals
-
+M6:
+https://www.gnu.org/software/libc/manual/html_node/Foreground-and-Background.html (not starting yet)
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <stdbool.h>
 #include "icsh_builtins.h"
 #include "icsh_external_command.h"
 #include "icsh_signal_handler.h"
@@ -36,6 +35,7 @@ https://www.ibm.com/docs/en/zos/2.4.0?topic=functions-sigemptyset-initialize-sig
 
 int main(int argc, char *argv[]) { // main is changed to handle both interactive and script mode
     char buffer[MAX_CMD_BUFFER];
+    char original_buffer[MAX_CMD_BUFFER]; //Milestone 5 handler
     char prev_command[MAX_CMD_BUFFER] = "";
     char *args[MAX_ARGS];
     int exit_code = -1;
@@ -75,8 +75,7 @@ int main(int argc, char *argv[]) { // main is changed to handle both interactive
      * I replaced the loop with `while (1)`, which creates an infinite loop.
      * This ensures that the shell keeps running and *only* exits when the user explicitly types `exit`.
      * ──── ୨୧ ────
-
-*/
+     */
     while (1) { // Keep the shell running forever — until I manually break the loop.
         if (input == stdin) {
             printf("icsh $ ");
@@ -91,8 +90,12 @@ int main(int argc, char *argv[]) { // main is changed to handle both interactive
 
         buffer[strcspn(buffer, "\n")] = 0;
 
-        if (strlen(buffer) == 0) {
-            continue;
+        if (strcmp(buffer, "!!") == 0) {
+            if (strlen(prev_command) == 0) {
+                continue;
+            }
+            strncpy(buffer, prev_command, MAX_CMD_BUFFER);
+            printf("%s\n", buffer); // show repeated command
         }
 
         // Milestone 5: External command is not repeated so I create a pre-tokenized command
@@ -114,7 +117,8 @@ int main(int argc, char *argv[]) { // main is changed to handle both interactive
         // 3) https://unix.stackexchange.com/questions/501128/what-does-echo-do
         // 4) If there is no previous command to set exit code , just set it = 0
         if (args[0] && strcmp(args[0], "echo") == 0 && args[1] && strcmp(args[1], "$?") == 0) {
-            printf("%d\n", exit_code == -1 ? 0 : exit_code); //(exit_code == -1 means no previous exit code status stored
+            printf("%d\n", exit_code == -1 ? 0 : exit_code);
+            //(exit_code == -1 means no previous exit code status stored
             continue;
         }
 
@@ -134,7 +138,7 @@ int main(int argc, char *argv[]) { // main is changed to handle both interactive
                 printf("icsh: error running command\n");
             }
         } else {
-            printf("bad command\n");
+            printf("bad command ૮(˶╥︿╥)ა \n");
         }
     }
 
