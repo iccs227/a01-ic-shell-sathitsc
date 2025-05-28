@@ -48,22 +48,49 @@ int handle_redirection(char *args[], char *exec_argument[],
 
     // I/O Redirection M5
     for (int i = 0; args[i] != NULL; i++) {
-        if (strcmp(args[i], "<") == 0 && args[i + 1] != NULL) {
-            input_file_descriptor = open(args[i + 1], O_RDONLY); // Open input file
-            if (input_file_descriptor < 0) {
-                perror("Error: Invalid input ( ꩜ ᯅ ꩜;) Cannot read file");
-                *exit_code = 1;
-                return -1;
+        if (strcmp(args[i], "<") == 0) {
+            if (args[i + 1] != NULL &&
+                strcmp(args[i + 1], "<") != 0 &&
+                strcmp(args[i + 1], ">") != 0 &&
+                strcmp(args[i + 1], ">>") != 0) {
+
+                *input_file_descriptor = open(args[i + 1], O_RDONLY);
+                if (*input_file_descriptor < 0) {
+                    perror("Error: Invalid input ( ꩜ ᯅ ꩜;) Cannot read file");
+                    *exit_code = 1;
+                    return -1;
+                }
+                i++; // Skip filename
+            } else {
+                // Not a valid redirection, treat "<" as normal built in from Milestone 1
+                exec_argument[j++] = args[i];
             }
-            i++;
-        } else if (strcmp(args[i], ">") == 0 && args[i + 1] != NULL) {
-            output_file_descriptor = open(args[i + 1], O_WRONLY | O_CREAT | O_TRUNC, 0644);
-            if (output_file_descriptor < 0) {
-                perror("Output file error");
-                *exit_code = 1;
-                return -1;
+
+        // Handle output redirection
+        } else if (strcmp(args[i], ">") == 0 || strcmp(args[i], ">>") == 0) {
+            if (args[i + 1] != NULL &&
+                strcmp(args[i + 1], "<") != 0 &&
+                strcmp(args[i + 1], ">") != 0 &&
+                strcmp(args[i + 1], ">>") != 0) {
+
+                int flags = O_WRONLY | O_CREAT;
+                if (strcmp(args[i], ">>") == 0)
+                    flags |= O_APPEND;
+                else
+                    flags |= O_TRUNC;
+
+                *output_file_descriptor = open(args[i + 1], flags, 0644);
+                if (*output_file_descriptor < 0) {
+                    perror("(ෆ˙ᵕ˙ෆ)♡ Cannot open output file");
+                    *exit_code = 1;
+                    return -1;
+                }
+                i++; // Skip filename
+            } else {
+                // Not a valid redirection, treat ">" or ">>" as built-in from Milestone1
+                exec_argument[j++] = args[i];
             }
-            i++;
+
         } else {
             exec_argument[j++] = args[i];
         }
