@@ -48,7 +48,8 @@ bool handle_builtin(char **args, int *exit_code) {
         return true;
     }
 
-    if (strcmp(args[0], "echo") == 0) {
+    // Built-in echo as usual from Milestone 1
+    if (strcmp(args[0], "echo") == 0 && !is_redirection(args)) {
         for (int i = 1; args[i] != NULL; i++) {
             printf("%s", args[i]);
             if (args[i + 1] != NULL) printf(" ");
