@@ -7,6 +7,30 @@
 #include <string.h>
 #include "icsh_builtins.h"
 
+/**
+ * At first, echo is considered as a built it but when I tested with </> + >>
+ * It printed out the text which is wrong, it should be considered as an external command
+ * from Milestone 1: echo is nothing but printing
+ * edit again: echo >/>> will be valid if and only if followed with a file name
+ * So, if echo > ; (no file name) it will print >
+ * Handle Append (>>) : Extra for Milestone 7
+ */
+
+
+bool is_redirection(char **args) {
+    for (int i = 0; args[i] != NULL; i++) {
+        if ((strcmp(args[i], ">") == 0 || strcmp(args[i], ">>") == 0 || strcmp(args[i], "<") == 0)) {
+            // Check if next token exists and is not another operator
+            if (args[i + 1] != NULL && strcmp(args[i + 1], ">") != 0 &&
+                strcmp(args[i + 1], ">>") != 0 && strcmp(args[i + 1], "<") != 0) {
+                return true;  // Valid redirection only
+                }
+        }
+    }
+    return false;
+}
+
+
 bool handle_repeat_command(char *buffer, const char *prev_command) {
     if (strcmp(buffer, "!!") == 0) {
         if (strlen(prev_command) == 0) {
