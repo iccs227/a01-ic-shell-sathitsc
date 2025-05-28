@@ -35,9 +35,13 @@ extern pid_t fg_pid;
  *    - Based from I/O Redirection Resources on A1
  */
 
-int run_external_command(char *args[], int *exit_code) {
-    int input_file_descriptor = -1, output_file_descriptor = -1;
-    char *exec_argument[100]; //only filtered arguments (NO < > )
+void close_file_descriptor(int input_fd, int output_fd) { //make sure to safely close the input and output files if they are open.
+    if (input_fd != -1) close(input_fd);
+    if (output_fd != -1) close(output_fd);
+}
+
+int handle_redirection(char *args[], char *exec_argument[],
+                       int *input_file_descriptor, int *output_file_descriptor, int *exit_code) {
     int j = 0;
 
     // I/O Redirection M5
