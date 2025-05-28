@@ -95,16 +95,9 @@ int main(int argc, char *argv[]) { // main is changed to handle both interactive
             continue;
         }
 
-        bool repeated = handle_repeat_command(buffer, prev_command);
-
-        if (repeated && strlen(buffer) == 0) {
-            // Milestone 1.2) !! with no previous command: do nothing, just next prompt
-            continue;
-        }
-
-        if (!repeated) {
-            strcpy(prev_command, buffer);
-        }
+        // Milestone 5: External command is not repeated so I create a pre-tokenized command
+        strncpy(original_buffer, buffer, MAX_CMD_BUFFER);
+        strncpy(prev_command, original_buffer, MAX_CMD_BUFFER);
 
         // Tokenize input
         int i = 0;
