@@ -140,9 +140,9 @@ void print_help() {
         "  echo <text>           ✦ say something out loud (prints your message)\n"
         "  !!                    ✦ repeat the last thing you said (previous output)\n"
         "  exit                  ✦ gracefully leave the shell (bye-bye!)\n"
-        "  fg %%<job_id>          ✦ bring a background task into the spotlight\n"
+        "  fg %<job_id>          ✦ bring a background task into the spotlight\n"
         "  jobs                  ✦ show all the cool stuff running in the background\n"
-        "  bg %%<job_id>          ✦ send a paused task back into action in the background\n"
+        "  bg %<job_id>          ✦ send a paused task back into action in the background\n"
         "  help                  ✦ need a hand? here's this guide again ☆\n";
     printf("%s", help_msg);
 }
