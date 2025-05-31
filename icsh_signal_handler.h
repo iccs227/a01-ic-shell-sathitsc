@@ -10,5 +10,7 @@ extern pid_t fg_pid;
 
 void signal_handler(int is_signal);
 void implement_signal_handlers();
+void sigchld_handler(int sig);
+
 
 #endif

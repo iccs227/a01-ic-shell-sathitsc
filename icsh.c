@@ -3,6 +3,7 @@
  * StudentID: 6481366
  */
 
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,6 +11,7 @@
 #include "icsh_builtins.h"
 #include "icsh_external_command.h"
 #include "icsh_signal_handler.h"
+
 
 #define MAX_CMD_BUFFER 255
 #define MAX_ARGS 64
@@ -22,6 +24,15 @@ int main(int argc, char *argv[]) {
     int exit_code = -1;
 
     implement_signal_handlers();  // Milestone 4: set up SIGINT and SIGTSTP
+    struct sigaction sa;
+    sa.sa_handler = sigchld_handler;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_RESTART | SA_NOCLDSTOP;
+    if (sigaction(SIGCHLD, &sa, NULL) == -1) {
+        perror("sigaction SIGCHLD");
+        exit(EXIT_FAILURE);
+    }
+
 
     FILE *input = stdin;
 
