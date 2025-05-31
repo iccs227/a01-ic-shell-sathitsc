@@ -1,39 +1,80 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/WIXYXthJ)
-# ICSH
+## Milestone Implementation Summary
+
+Milestones 1 & 2: Basic Shell Loop and Script Mode
 
 
-# Milestone 1: Interactive command-line interpreter
+Originally, the shell used while (exit_code == -1) to control the main loop. However, any valid or failed command would update exit_code, prematurely exiting the shell.
 
-- Shows a prompt (icsh $)
-- Reads user commands : !!(repeat previous command), echo and exit
-- Prints "bad command" if input is not valid
 
-Firstly, I declare `int exit_code = -1;`to control when to exit the shell and -1 means keep running.
-  Once the shell starts it displays prompt (icsh $)
- 
-  
-  To handle the requirements in Milestone 1:
-    
-I seperated into icsh.c icsh_builtins.c
-icsh.c ➜ the main shell loop, input reading, and command processing.
+Fix: Replaced with while (1) to run indefinitely until the user explicitly types exit.
 
-icsh_builtins.c ➜ logic for built-in commands; exit, echo, and !!.
+Added argc checks to support both interactive and script mode:
 
-## 1. handle_repeat_command(char *buffer, const char *prev_command)
-   
-If !! is entered and there is no previous command stored, it clears the input buffer so nothing runs, and give a new prompt.
-If there is a previous command, it replaces the current input buffer with that previous command to execute it again.
+argc == 1: Interactive mode using stdin
 
-## 2. handle_builtin(char **args, int *exit_code)
-   
-This function checks if the parsed command matches any built-in commands and handles them internally without creating a new process.
+argc > 1: Script mode; input is read from the file passed as an argument
 
-Milestone 1 Built-ins include:
 
-- echo: Prints all the arguments given after the echo command
-- exit: Exits the shell (>= 0 = "Exit the shell with this code")
+Echo Command
 
-When a built-in command is executed, the function returns true indicating the command was handled; otherwise, it returns false to indicate it’s not a built-in and show "bad command".
+Implemented echo $? to display the last command’s exit code, mimicking basic shell behavior.
 
-The shell keeps running while exit_code == -1.
-When exit_code is changed by a built-in command "exit", the loop ends and the program exits.
+
+echo was initially treated as a built-in, but caused issues with I/O redirection (>/>>).
+
+
+Fix: Treated echo as an external command when used with redirection.
+
+
+Milestone 5: I/O Redirection
+
+
+Added support for <, >, and >>.
+
+
+Implemented handle_redirection() and helper functions to manage file descriptors safely. 
+
+Ensures redirection operators are followed by a valid filename.
+
+
+Milestone 6: Background Jobs and Job Control
+
+Introduced background job support using &, jobs, fg, bg.
+
+Set setpgid(0, 0) in child processes to manage process groups.
+
+Handled signals (SIGCHLD, SIGINT, SIGTSTP) with sigaction() for robust job control.
+
+waitpid() used with WUNTRACED to detect if a process stops (e.g., via Ctrl+Z).
+
+Job list management included storing command strings and job statuses.
+
+
+Signals and Resilience
+Used sigaction() with SA_RESTART to automatically retry interrupted system calls (e.g., read(), wait()).
+Ensured shell remains interactive and handles unexpected signals.
+
+source
+
+https://medium.com/@santiagobedoa/coding-a-shell-using-c-1ea939f10e7e  
+
+https://medium.com/@WinnieNgina/guide-to-code-a-simple-shell-in-c-bd4a3a4c41cd  
+
+https://www.shecodes.io/athena/68870-how-to-write-a-unix-command-line-interpreter-in-c 
+
+https://www.cs.purdue.edu/homes/grr/SystemsProgrammingBook/Book/Chapter5-WritingYourOwnShell.pdf  
+
+https://shapeshed.com/unix-exit-codes/  
+
+https://stackoverflow.com/questions/2485028/signal-handling-in-c  
+
+https://stackoverflow.com/questions/22865730/wexitstatuschildstatus-returns-0-but-waitpid-returns-1  
+
+https://www.ibm.com/docs/en/zos/3.1.0?topic=functions-wait-wait-child-process-end  
+
+https://people.cs.rutgers.edu/~pxk/416/notes/c-tutorials/wait.html  
+
+https://www.ibm.com/docs/en/zos/2.4.0?topic=functions-sigemptyset-initialize-signal-mask-exclude-all-signals  
+
+https://www.gnu.org/software/libc/manual/html_node/Foreground-and-Background.html  
+
