@@ -10,6 +10,7 @@
 #include <sys/wait.h>
 #include <signal.h>
 #include "icsh_builtins.h"
+#include "icsh_extra.h"
 #include "icsh_jobs.h"
 
 
@@ -30,6 +31,12 @@ bool is_redirection(char **args) {
 
 bool handle_builtin(char **args, int *exit_code) {
     if (args[0] == NULL) return true;
+
+    if (strcmp(args[0], "help") == 0) {
+        print_help();
+        *exit_code = 0;
+        return 1; // indicate built-in command handled
+    }
 
     // Milestone 1: echo
     if (strcmp(args[0], "echo") == 0 && !is_redirection(args)) {

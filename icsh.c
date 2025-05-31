@@ -11,6 +11,7 @@
 #include "icsh_builtins.h"
 #include "icsh_external_command.h"
 #include "icsh_signal_handler.h"
+#include "icsh_extra.h"
 
 
 #define MAX_CMD_BUFFER 255
@@ -66,8 +67,13 @@ int main(int argc, char *argv[]) {
             break;
         }
 
-        //newline
         buffer[strcspn(buffer, "\n")] = '\0';
+
+        // Handle piped commands
+        if (strchr(buffer, '|') != NULL) {
+            execute_piped_commands(buffer);
+            continue;
+        }
 
         // Handle repeat command (!!)
         if (strcmp(buffer, "!!") == 0) {
