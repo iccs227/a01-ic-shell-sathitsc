@@ -1,0 +1,94 @@
+
+source :
+M1 :
+https://medium.com/@santiagobedoa/coding-a-shell-using-c-1ea939f10e7e
+https://medium.com/@WinnieNgina/guide-to-code-a-simple-shell-in-c-bd4a3a4c41cd
+https://www.shecodes.io/athena/68870-how-to-write-a-unix-command-line-interpreter-in-c
+M2 :
+https://www.cs.purdue.edu/homes/grr/SystemsProgrammingBook/Book/Chapter5-WritingYourOwnShell.pdf
+https://shapeshed.com/unix-exit-codes/
+M4 :
+https://stackoverflow.com/questions/2485028/signal-handling-in-c
+https://stackoverflow.com/questions/22865730/wexitstatuschildstatus-returns-0-but-waitpid-returns-1
+https://www.ibm.com/docs/en/zos/3.1.0?topic=functions-wait-wait-child-process-end
+https://people.cs.rutgers.edu/~pxk/416/notes/c-tutorials/wait.html
+https://www.ibm.com/docs/en/zos/2.4.0?topic=functions-sigemptyset-initialize-signal-mask-exclude-all-signals
+M6:
+https://www.gnu.org/software/libc/manual/html_node/Foreground-and-Background.html (not starting yet)
+
+
+    /**
+     * In Milestone 1 and 2, the main shell loop was :
+     *      while (exit_code == -1)
+     * ──── ୨୧ ────
+     * This worked on m1,2 because `exit_code` remained -1 unless explicitly set by a command.
+     * Once any command sets `exit_code` to something other than -1 (like 0 for success) check icsh_external_command.c,
+     * the condition `exit_code == -1` becomes false and it stops running.
+     * As a result, the shell loop exits—even if I did not type `exit`.
+     * I replaced the loop with `while (1)`, which creates an infinite loop.
+     * This ensures that the shell keeps running and *only* exits when the user explicitly types `exit`.
+     * ──── ୨୧ ────
+     */
+
+    // in Milestone 2, I add argc into main to count command-line arguments.
+    // set default: interactive mode input, user can type anything ≽^• ˕ • ྀི≼
+    //For Milestone argc == 1 : "no arguments" = only ./icsh is assigned → use stdin.
+    // if it is larger than 1, will consider it as a script mode
+    // use ./icsh testMileStone2.sh to test
+
+    // Interactive mode ₍^. .^₎⟆
+    // If no file is passed → input stay as stdin (standard mode)
+    // Stay the same as Milestone 1
+
+           // check echo $?
+            // 1) user must type 'echo' as the first word and followed with "$?" first
+            // 2) If true, prints the last exit code.
+            // 3) https://unix.stackexchange.com/questions/501128/what-does-echo-do
+            // 4) If there is no previous command to set exit code , just set it = 0
+
+
+/**
+ * 1) This function handles execution of external commands.
+ *    - `args[]` is tokenized.
+ *    - Uses a pointer `exit_code` to store the exit status of the command.
+ *
+ * 2) Forks a new process so that the shell doesn't replace itself by calling `execvp()` directly.
+ *    - The child runs the external command using `execvp`.
+ *
+ * 3) Problem I faced:
+ *    - In earlier versions (Milestone 1 & 2), the shell's main loop used:
+ *          while (exit_code == -1)
+ *    - But when an external command runs, `exit_code` is updated. --> loop ends (I don't want that)
+ * For valid command exit_code = 0, else = other error numbers (1)
+ * Anything other than -1 (like 0, 1, or 127), loop stops .·°՞(っ-ᯅ-ς)՞°·.
+ *
+ * 4) Fix (in `icsh.c`):
+ *    - Changed the loop to: `while (1)`
+ *    - This allows the shell to keep running until explicitly types `exit`.
+ *
+ * 5) Milestone 5: I/O Redirection
+ *    - Based from I/O Redirection Resources on A1
+ *    - Handle appending
+ *    - add function to handle closing the open file descriptors for input/output redirection, if valid.
+ *    - add handle_redirection
+ *
+ */
+    /*If a signal interrupts a system call (like read(), wait(), or write()),
+     *just automatically try again instead of making it fail.
+     *https://pubs.opengroup.org/onlinepubs/9799919799/functions/sigaction.html
+     */
+
+     // https://stackoverflow.com/questions/2485028/signal-handling-in-c
+     // https://www.devzery.com/post/your-ultimate-guide-to-c-handlers
+     //https://www.ibm.com/docs/en/zos/3.1.0?topic=functions-wait-wait-child-process-end (very good one)
+     //https://people.cs.rutgers.edu/~pxk/416/notes/c-tutorials/wait.html
+
+     /**
+      * At first, echo is considered as a built it but when I tested with </> + >>
+      * It printed out the text which is wrong, it should be considered as an external command
+      * from Milestone 1: echo is nothing but printing
+      * edit again: echo >/>> will be valid if and only if followed with a file name
+      * So, if echo > ; (no file name) it will print >
+      * Handle Append (>>) : Extra for Milestone 7
+      */
+
